@@ -5,19 +5,15 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import NewsApiService from './js/api-servise';
-// import LoadMoreBtn from './js/load-more-btn';
 
 
-const refs = {
-  searchForm: document.querySelector('#search-form'),
-  galleryList: document.querySelector('.gallery'),
-  loadMoreBtn: document.querySelector('.load-more'),
-};
-// const loadMoreBtn = new LoadMoreBtn();
+
+const refs = getRefs();
+
 const newsApiService = new NewsApiService();
 
 refs.searchForm.addEventListener(`submit`, onSearch);
-refs.loadMoreBtn.addEventListener(`click`, onLoadMore);
+// refs.loadMoreBtn.addEventListener(`click`, onLoadMore);
 
 function onSearch(e) {
     e.preventDefault();
@@ -27,19 +23,19 @@ function onSearch(e) {
     if (newsApiService.query === ``) {
         return alert(`Введите что-то нормальное`)
     }
-    
-        newsApiService.resetPage();
+    newsApiService.resetPage();
+    clearGallery();
     newsApiService.fetchArticles().then(articles => {
-        clearGallery();
         appendArticlesMarkup(articles);
+        newsApiService.incrementPage();
     });
 }
 
 
-function onLoadMore() {
-    newsApiService.fetchArticles().then(appendArticlesMarkup);
+// function onLoadMore() {
+//     newsApiService.fetchArticles().then(appendArticlesMarkup);
     
-}
+// }
 
 function appendArticlesMarkup(articles) {
     // const markup = data.hits.map(articles => renderCard(articles)).join('');
@@ -49,3 +45,28 @@ function appendArticlesMarkup(articles) {
 function clearGallery() {
     refs.galleryList.innerHTML = ``;
 }
+
+function getRefs() {
+    return {
+      searchForm: document.querySelector('#search-form'),
+      galleryList: document.querySelector('.gallery'),
+      loadmore: document.querySelector('#loadmore'),
+    };
+}
+
+const onEntry = entries => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            console.log(`...`);
+            newsApiService.fetchArticles().then(articles => {
+              appendArticlesMarkup(articles);
+              newsApiService.incrementPage();
+            });
+        }
+    });
+};
+
+const options = {}
+
+const observer = new IntersectionObserver(onEntry, options);
+observer.observe(refs.loadmore);
